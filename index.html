@@ -1,0 +1,141 @@
+<html>
+<head>
+	<title>10-mila ONLINE Control Monitoring 2014</title>
+	<meta name="viewport" content="width=device-width, initial-scale=1">
+	<!-- <link rel="stylesheet" href="http://code.jquery.com/mobile/1.2.1/jquery.mobile-1.2.1.min.css" /> -->
+	<link rel="stylesheet" href="http://127.0.0.1/jquery.mobile-1.4.2.css" />
+	<script src="http://code.jquery.com/jquery-1.8.3.min.js"></script>
+	<script src="http://127.0.0.1/jquery.mobile-1.4.2.min.js"></script>
+<script src="http://127.0.0.1:3000/socket.io/socket.io.js"></script>
+	<!-- <script src="//cdn.flurry.com/js/flurry.js"></script> -->
+<script>
+$(document).ready(function() {
+		//FlurryAgent.startSession('7TNHDKBF6NRF2FHTCHRJ');
+		//var env = {};
+		//env['os'] = 'iOS'; // determine the OS
+		//env['browser'] = 'Safari'; // determine the browser
+		//FlurryAgent.logEvent('environment', env); // save the OS and Browser
+		//console.log(env); 
+		//var flurryConnect ={};
+		//flurryConnect['Session'] = '';
+		//var flurryAction ={};
+		//flurryAction['Action'] = '';
+		
+		
+
+ var socket  = io.connect('http://127.0.0.1:3000');
+ var filtervalue='';
+ var filterdata='';
+ var passesdata='';
+ var finishdata='';
+
+ function renderPassings()
+ {
+    var out = "";
+	console.log("renderPassingsData");
+	$.each(passesdata, function(key, value) {
+		$("h4").filter("."+value.control).html("<p style='color:red'>"+value.control+" &middot; P-60: <strong>"+value.passings+"</strong>")
+		//.addClass("ui-li-10mila-finish");
+    });
+  };
+function renderControls()
+{
+var out = "";
+	console.log("renderControls");
+    $.each(controlsdata, function(key, value) {
+		$.each(filtervalue, function(index,filtervalue2) {
+			//console.log('FILTER: '+filtervalue+';');
+			//console.log('FILTER2: '+filtervalue2+';');
+			if(value.control===filtervalue2) { 
+//				out += "<li class='"+value.control+"'><strong>"+value.BibNumber+"</strong> - PW: "+value.Time+"</li>";
+			out += '<li><h4 class="'+value.control+'">'+value.control+' &middot; '+value.passings+'</h4><p class="'+value.control+' ">P-60: </p> </li>';
+			};
+		});
+		if(filtervalue==='') {
+			out += '<li><h4 class="'+value.control+'">'+value.control+' &middot; P-60:</h4></li>';
+			};
+	});
+    $('#prewarning').html(out);
+	$('#prewarning').listview('refresh');
+};
+
+
+$('#save').click(function() {
+//	flurryAction['Action'] = 'Filter';
+//  FlurryAgent.logEvent('Action',flurryAction);
+  filterdata = $('#bibfilter').val();
+	console.log(filterdata);
+	filtervalue = filterdata.split(/[, ]/);
+	console.log(filtervalue);
+	renderData();
+	renderFinishData();
+});
+$('#clear').click(function() {
+	filtervalue='';
+	filterdata='';
+	renderData();
+    renderFinishData();
+});
+  socket.on('connect', function(){
+//  flurryConnect['Session'] = 'Connect';
+//  FlurryAgent.logEvent('Session',flurryConnect);
+  //console.log(flurryConnect);
+  console.log('Socket: Connect');
+  $('#online').html('<p style="color:blue;text-align:center">10-mila ONLINE Control Monitoring 2014 - <b>Online</b></p>');
+  });
+  socket.on('error', function(){
+//  flurryConnect['Session'] = 'Error';
+//  FlurryAgent.logEvent('Session',flurryConnect);
+  console.log('Socket: ERROR');
+  $('#online').html('<p style="color:red;text-align:center">10-mila ONLINE Control Monitoring 2014 - <b>Offline</b></p>');
+  });
+  socket.on('disconnect', function(){
+//  flurryConnect['Session'] = 'Disconnect';
+//  FlurryAgent.logEvent('Session',flurryConnect);
+  console.log('Socket: Disconnect');
+  $('#online').html('<p style="color:red;text-align:center">10-mila ONLINE Control Monitoring 2014 - <b>Offline</b></p>');
+  });
+  socket.on('time', function(data) {
+  $('#online').html('<p style="color:green;text-align:center">10-mila ONLINE Control Monitoring 2014 - <b>Online - '+data+'</b></p>');
+  });
+  
+  socket.on('controls', function(data) {
+  controlsdata=data;
+  console.log(controlsdata);
+  renderControls();
+  });
+  socket.on('passings', function(data) {
+  passesdata=data;
+  console.log(passesdata);
+    renderControls();
+
+  renderPassings();
+  });
+  socket.on('finish', function(data) {
+  finishdata=data;
+  renderFinishData();
+  });
+});
+</script>
+	</head>
+<body>
+<!--  <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.7.1/jquery.min.js"></script> -->
+<div id=online></div>
+<!-- <input type="search" name="search" id="bibfilter" value="" />   -->
+<!-- <fieldset class="ui-grid-b">
+	<div class="ui-block-a"><input type="text" placeholder="e.g. 41 135 200" id="bibfilter" value="" data-theme="c"></div>
+	<div class="ui-block-b"><button type="submit" id="save" data-theme="b">Filter</button></div>
+	<div class="ui-block-b"><button type="submit" id="clear" data-theme="b">Clear</button></div>
+</fieldset>    -->
+<!-- <div>Bib: <input type="text" id="bib" value=""></div>
+<div id="bib2"></div>
+<div><input type="button" value="Save" id="save"></div>
+<br>
+ -->
+<!-- <ul id="prewarning" data-role="listview" data-filter="true"></ul> -->
+<ul id="prewarning" data-role="listview"></ul>
+</body>
+<div data-role="footer">
+	<h4>Bib - PW (Pre Warning) - LC (Last Control)</h4>
+</div>
+</html>
